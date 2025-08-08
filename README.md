@@ -1,4 +1,4 @@
-# My Robot Project
+# Bipedal Robot Project
 
 Progetto ROS 2 in C++ per il controllo del robot.
 
