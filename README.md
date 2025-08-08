@@ -11,7 +11,7 @@ Progetto ROS 2 in C++ per il controllo del robot.
 ## Build
 
 ```bash
-cd my_robot_project
+cd bipedal_robot_project
 rosdep install --from-paths src --ignore-src -r -y
 colcon build
 ```
