@@ -1,24 +1,25 @@
-# Bipedal Robot Project
+# 🦖 Bipedal Robot Project
+ROS 2 project for the control of a bipedal robot.
 
-Progetto ROS 2 in C++ per il controllo del robot.
-
-## Requisiti
-
+## Technologies
 - ROS 2 Humble
-- Ubuntu 22.04
-- C++
+- micro-ROS
+- Gazebo
+- HTML
 
-## Build
+## Languages
+C++
+
+
+
+## How to Build
 
 ```bash
-cd bipedal_robot_project
-rosdep install --from-paths src --ignore-src -r -y
-colcon build
+
 ```
 
-## Run
+## How to Run
 
 ```bash
-source install/setup.bash
-ros2 launch my_robot_control control.launch.py
+
 ```
