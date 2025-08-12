@@ -1,0 +1,13 @@
+# Request
+# Foot name that needs a new trajectory
+# 0 = right, 1 = left
+uint8 foot_id
+
+---
+
+# Response
+# Trajectory points 
+geometry_msgs/Point[] points
+
+# Time relative to each trajectory point
+builtin_interfaces/Duration[] times
