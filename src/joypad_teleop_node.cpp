@@ -1,5 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "Bipedal_Robot/msg/UserCommands.hpp"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 
 // Includi la libreria HTTP. Ignora i warning che potrebbe generare.
 #define CPPHTTPLIB_OPENSSL_SUPPORT
@@ -31,7 +32,7 @@ const std::map<std::string, int> BUTTON_MAP = {
 class JoypadTeleopNode : public rclcpp::Node {
 public:
     JoypadTeleopNode() : Node("joypad_teleop_node"),
-  buttons_switches_values{0} {
+  buttons_switches_values{} {
         RCLCPP_INFO(this->get_logger(), "Avvio del nodo Web Controller C++...");
 
         // Ottieni il percorso della share directory del pacchetto per trovare l'HTML
@@ -162,6 +163,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
