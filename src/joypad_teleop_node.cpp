@@ -40,7 +40,7 @@ public:
         joy_msg.speed_mode= 0;
 
         // Inizializza l'array di valori dei bottoni e switch
-        buttons_switches_values{0, 0, 0, 0, 0, 0}
+        buttons_switches_values = {0, 0, 0, 0, 0, 0}
 
         // Configura e avvia il server in un thread separato
         start_server();
@@ -96,7 +96,7 @@ private:
                 double y_joy = std::stof(req.get_param_value("y"));
 
                 if (x_joy == 0) x_joy = 0.0001;
-                joy_msg.joystick_angles= std::atan(y_joy/x_joy) * 180.0 / M_PI;
+                joy_msg.joystick_angles= std::atan2(y_joy/x_joy) * 180.0 / M_PI;
                 joy_msg.state = 2;
                 
             } else if (type == "button" || type == "switch") {
@@ -160,6 +160,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
