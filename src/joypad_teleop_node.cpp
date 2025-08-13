@@ -29,7 +29,7 @@ public:
         RCLCPP_INFO(this->get_logger(), "Avvio del nodo Web Controller C++...");
 
         // Ottieni il percorso della share directory del pacchetto per trovare l'HTML
-        html_path_ = ament_index_cpp::get_package_share_directory("include") + "/Bipedal_Robot/joypad.html";
+        html_path = ament_index_cpp::get_package_share_directory("include") + "/Bipedal_Robot/joypad.html";
         
         // Publisher per il messaggio Joy
         joy_publisher = this->create_publisher<Bipedal_Robot::msg::UserCommands>("user_cmds", 40);
@@ -48,9 +48,9 @@ public:
 
     ~JoypadTeleopNode() {
         RCLCPP_INFO(this->get_logger(), "Arresto del server HTTP...");
-        server_.stop();
-        if (server_thread_.joinable()) {
-            server_thread_.join();
+        server.stop();
+        if (server_thread.joinable()) {
+            server_thread.join();
         }
         RCLCPP_INFO(this->get_logger(), "Server HTTP arrestato.");
     }
@@ -58,7 +58,7 @@ public:
 private:
     void start_server() {
         // Gestore per servire il file HTML
-        server_.Get("/", [this](const httplib::Request&, httplib::Response& res) {
+        server.Get("/", [this](const httplib::Request&, httplib::Response& res) {
             std::ifstream file(html_path);
             if (file) {
                 std::stringstream buffer;
@@ -71,7 +71,7 @@ private:
         });
 
         // Gestore per l'aggiornamento dei dati del controller
-        server_.Get("/update", [this](const httplib::Request& req, httplib::Response& res) {
+        server.Get("/update", [this](const httplib::Request& req, httplib::Response& res) {
             this->process_web_data(req);
             res.set_content("OK", "text/plain");
         });
@@ -80,7 +80,7 @@ private:
         server_thread_ = std::thread([this]() {
             RCLCPP_INFO(this->get_logger(), "Server HTTP avviato su http://localhost:8000");
             RCLCPP_INFO(this->get_logger(), "Apri questo indirizzo nel browser per usare il controller.");
-            server_.listen("0.0.0.0", 8000);
+            server.listen("0.0.0.0", 8000);
         });
     }
 
@@ -160,6 +160,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
