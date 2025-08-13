@@ -29,7 +29,7 @@ public:
         RCLCPP_INFO(this->get_logger(), "Avvio del nodo Web Controller C++...");
 
         // Ottieni il percorso della share directory del pacchetto per trovare l'HTML
-        html_path_ = ament_index_cpp::get_package_share_directory("include") + "/Bipedal_Robod/joypad.html";
+        html_path_ = ament_index_cpp::get_package_share_directory("include") + "/Bipedal_Robot/joypad.html";
         
         // Publisher per il messaggio Joy
         joy_publisher = this->create_publisher<Bipedal_Robot::msg::UserCommands>("user_cmds", 40);
@@ -40,7 +40,7 @@ public:
         joy_msg.speed_mode= 0;
 
         // Inizializza l'array di valori dei bottoni e switch
-        buttons_switches_values = {0, 0, 0, 0, 0, 0}
+        buttons_switches_values{0, 0, 0, 0, 0, 0}
 
         // Configura e avvia il server in un thread separato
         start_server();
@@ -94,8 +94,10 @@ private:
             if (type == "joystick") {
                 double x_joy = std::stof(req.get_param_value("x"));
                 double y_joy = std::stof(req.get_param_value("y"));
-                
+
+                if (x_joy == 0) x_joy = 0.0001;
                 joy_msg.joystick_angles= std::atan(y_joy/x_joy) * 180.0 / M_PI;
+                joy_msg.state = 2;
                 
             } else if (type == "button" || type == "switch") {
                 // UPDATE BUTTONS AND SWITCHES VALUES
@@ -114,8 +116,7 @@ private:
                     // {sitted, 0}, {walking on the spot, 1}, {joystick, 2}, {L1 rotation, 3}, {R1 rotation, 4}, {L2 lateral, 5}, {R2 lateral, 6}
                     if (buttons_switches_values[5] == 1) joy_msg.state = 0;  //if SITTED switch is on, state is SITTED for sure
                     else {
-                        if ((x_joy == 0 && y_joy == 0) && buttons_switches_values[0] == 0 && buttons_switches_values[1] == 0 && buttons_switches_values[2] == 0 && buttons_switches_values[3] == 0) joy_msg.state = 1; 
-                        else if (x_joy != 0 || y_joy != 0) joy_msg.state = 2;
+                        if (buttons_switches_values[0] == 0 && buttons_switches_values[1] == 0 && buttons_switches_values[2] == 0 && buttons_switches_values[3] == 0) joy_msg.state = 1; 
                         else if (buttons_switches_values[0] == 1) joy_msg.state = 3;
                         else if (buttons_switches_values[1] == 1) joy_msg.state = 4;
                         else if (buttons_switches_values[2] == 1) joy_msg.state = 5;
@@ -146,9 +147,9 @@ private:
     std::string html_path;
     std::mutex joy_mutex;
 
-    rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr joy_publisher;
+    rclcpp::Publisher<Bipedal_Robot::msg::UserCommands>::SharedPtr joy_publisher;
     Bipedal_Robot::msg::UserCommands joy_msg;
-    int[6] buttons_switches_values;
+    std::array<int, 6> buttons_switches_values;
     
 };
 
@@ -159,5 +160,6 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
