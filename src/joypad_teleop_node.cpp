@@ -1,11 +1,11 @@
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/joy.hpp"
+#include "Bipedal_Robot/msg/UserCommands.hpp"
 
 // Includi la libreria HTTP. Ignora i warning che potrebbe generare.
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-#include "web_controller_cpp/httplib.h"
+#include "Bipedal_Robot/include/httplib.h"
 #pragma GCC diagnostic pop
 
 #include <thread>
@@ -13,32 +13,40 @@
 #include <fstream>
 #include <map>
 
+#include <iostream>
+#include <cmath>
+
+
 // Definiamo la mappatura dai nomi dei pulsanti agli indici dell'array
 const std::map<std::string, int> BUTTON_MAP = {
     {"L1", 0}, {"L2", 1}, {"R1", 2}, {"R2", 3},
     {"switch1", 4}, {"switch2", 5}
 };
 
-class WebControllerNode : public rclcpp::Node {
+class JoypadTeleopNode : public rclcpp::Node {
 public:
-    WebControllerNode() : Node("web_controller_node") {
+    JoypadTeleopNode() : Node("joypad_teleop_node") {
         RCLCPP_INFO(this->get_logger(), "Avvio del nodo Web Controller C++...");
 
         // Ottieni il percorso della share directory del pacchetto per trovare l'HTML
-        html_path_ = ament_index_cpp::get_package_share_directory("web_controller_cpp") + "/public/controller.html";
+        html_path_ = ament_index_cpp::get_package_share_directory("include") + "/Bipedal_Robod/joypad.html";
         
         // Publisher per il messaggio Joy
-        joy_publisher_ = this->create_publisher<sensor_msgs::msg::Joy>("joy", 10);
+        joy_publisher = this->create_publisher<Bipedal_Robot::msg::UserCommands>("user_cmds", 40);
 
         // Inizializza il messaggio Joy
-        joy_msg_.axes.resize(2, 0.0);
-        joy_msg_.buttons.resize(BUTTON_MAP.size(), 0);
+        joy_msg.joystick_angles= 0.0;
+        joy_msg.state = 0;
+        joy_msg.speed_mode= 0;
+
+        // Inizializza l'array di valori dei bottoni e switch
+        buttons_switches_values = {0, 0, 0, 0, 0, 0}
 
         // Configura e avvia il server in un thread separato
         start_server();
     }
 
-    ~WebControllerNode() {
+    ~JoypadTeleopNode() {
         RCLCPP_INFO(this->get_logger(), "Arresto del server HTTP...");
         server_.stop();
         if (server_thread_.joinable()) {
@@ -51,13 +59,13 @@ private:
     void start_server() {
         // Gestore per servire il file HTML
         server_.Get("/", [this](const httplib::Request&, httplib::Response& res) {
-            std::ifstream file(html_path_);
+            std::ifstream file(html_path);
             if (file) {
                 std::stringstream buffer;
                 buffer << file.rdbuf();
                 res.set_content(buffer.str(), "text/html");
             } else {
-                res.set_content("File non trovato: controller.html", "text/plain");
+                res.set_content("File non trovato: joypad.html", "text/plain");
                 res.status = 404;
             }
         });
@@ -80,51 +88,76 @@ private:
         try {
             auto type = req.get_param_value("type");
             
-            // Proteggiamo l'accesso a joy_msg_ con un mutex
-            std::lock_guard<std::mutex> lock(joy_mutex_);
+            // Proteggiamo l'accesso a joy_msg con un mutex
+            std::lock_guard<std::mutex> lock(joy_mutex);
 
             if (type == "joystick") {
-                joy_msg_.axes[0] = std::stof(req.get_param_value("x"));
-                joy_msg_.axes[1] = std::stof(req.get_param_value("y"));
-            } else if (type == "button" || type == "switch") {
-                std::string id = req.has_param("button") ? req.get_param_value("button") : req.get_param_value("id");
-                int state = std::stoi(req.get_param_value("state"));
+                double x_joy = std::stof(req.get_param_value("x"));
+                double y_joy = std::stof(req.get_param_value("y"));
                 
-                auto it = BUTTON_MAP.find(id);
+                joy_msg.joystick_angles= std::atan(y_joy/x_joy) * 180.0 / M_PI;
+                
+            } else if (type == "button" || type == "switch") {
+                // UPDATE BUTTONS AND SWITCHES VALUES
+                std::string id = req.has_param("button") ? req.get_param_value("button") : req.get_param_value("id");
+                int button_state = std::stoi(req.get_param_value("state"));
+                
+                auto it = BUTTON_MAP.find(id);            
                 if (it != BUTTON_MAP.end()) {
-                    joy_msg_.buttons[it->second] = state;
+                    buttons_switches_values[it->second] = button_state;
+
+                    // SPEED MODE SELECTION
+                    if (buttons_switches_values[4] == 1) joy_msg.speed_mode= 1;    
+                    else joy_msg.speed_mode= 0;
+
+                    // ROBOT STATE SELECTION:
+                    // {sitted, 0}, {walking on the spot, 1}, {joystick, 2}, {L1 rotation, 3}, {R1 rotation, 4}, {L2 lateral, 5}, {R2 lateral, 6}
+                    if (buttons_switches_values[5] == 1) joy_msg.state = 0;  //if SITTED switch is on, state is SITTED for sure
+                    else {
+                        if ((x_joy == 0 && y_joy == 0) && buttons_switches_values[0] == 0 && buttons_switches_values[1] == 0 && buttons_switches_values[2] == 0 && buttons_switches_values[3] == 0) joy_msg.state = 1; 
+                        else if (x_joy != 0 || y_joy != 0) joy_msg.state = 2;
+                        else if (buttons_switches_values[0] == 1) joy_msg.state = 3;
+                        else if (buttons_switches_values[1] == 1) joy_msg.state = 4;
+                        else if (buttons_switches_values[2] == 1) joy_msg.state = 5;
+                        else if (buttons_switches_values[3] == 1) joy_msg.state = 6;
+                    }
                 } else {
                     RCLCPP_WARN(this->get_logger(), "ID pulsante/switch non riconosciuto: %s", id.c_str());
                     return;
                 }
+       
             } else {
                  RCLCPP_WARN(this->get_logger(), "Tipo di evento non riconosciuto: %s", type.c_str());
                  return;
             }
             
-            // Aggiunge il timestamp e pubblica il messaggio
-            joy_msg_.header.stamp = this->get_clock()->now();
-            joy_publisher_->publish(joy_msg_);
+            // ADD TIMESTAMP AND PUBLISH MESSAGE
+            joy_msg.header.stamp = this->get_clock()->now();
+            joy_publisher->publish(joy_msg);
 
         } catch (const std::exception& e) {
             RCLCPP_ERROR(this->get_logger(), "Errore nell'elaborazione dei dati: %s", e.what());
         }
     }
 
-    rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr joy_publisher_;
-    sensor_msgs::msg::Joy joy_msg_;
-    std::mutex joy_mutex_;
+
+    httplib::Server server;
+    std::thread server_thread;
+    std::string html_path;
+    std::mutex joy_mutex;
+
+    rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr joy_publisher;
+    Bipedal_Robot::msg::UserCommands joy_msg;
+    int[6] buttons_switches_values;
     
-    httplib::Server server_;
-    std::thread server_thread_;
-    std::string html_path_;
 };
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<WebControllerNode>();
+    auto node = std::make_shared<JoypadTeleopNode>();
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }
+
 
