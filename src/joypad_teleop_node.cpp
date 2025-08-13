@@ -10,8 +10,6 @@
 #pragma GCC diagnostic pop
 
 #include <thread>
-#include <mutex>
-
 #include <map>
 #include <cmath>
 #include <array>
@@ -91,9 +89,6 @@ private:
     void process_web_data(const httplib::Request& req) {
         try {
             auto type = req.get_param_value("type");
-            
-            // Proteggiamo l'accesso a joy_msg con un mutex
-            std::lock_guard<std::mutex> lock(joy_mutex);
 
             if (type == "joystick") {
                 double x_joy = std::stof(req.get_param_value("x"));
@@ -148,7 +143,6 @@ private:
     httplib::Server server;
     std::thread server_thread;
     std::string html_path;
-    std::mutex joy_mutex;
 
     rclcpp::Publisher<Bipedal_Robot::msg::UserCommands>::SharedPtr joy_publisher;
     Bipedal_Robot::msg::UserCommands joy_msg;
@@ -163,6 +157,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
