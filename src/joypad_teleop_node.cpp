@@ -10,11 +10,16 @@
 
 #include <thread>
 #include <mutex>
-#include <fstream>
-#include <map>
 
-#include <iostream>
+#include <map>
 #include <cmath>
+#include <array>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+
 
 
 // Definiamo la mappatura dai nomi dei pulsanti agli indici dell'array
@@ -25,11 +30,12 @@ const std::map<std::string, int> BUTTON_MAP = {
 
 class JoypadTeleopNode : public rclcpp::Node {
 public:
-    JoypadTeleopNode() : Node("joypad_teleop_node") {
+    JoypadTeleopNode() : Node("joypad_teleop_node"),
+  buttons_switches_values{0} {
         RCLCPP_INFO(this->get_logger(), "Avvio del nodo Web Controller C++...");
 
         // Ottieni il percorso della share directory del pacchetto per trovare l'HTML
-        html_path = ament_index_cpp::get_package_share_directory("include") + "/Bipedal_Robot/joypad.html";
+        html_path = ament_index_cpp::get_package_share_directory("Bipedal_Robot") + "/joypad.html";
         
         // Publisher per il messaggio Joy
         joy_publisher = this->create_publisher<Bipedal_Robot::msg::UserCommands>("user_cmds", 40);
@@ -38,9 +44,6 @@ public:
         joy_msg.joystick_angles= 0.0;
         joy_msg.state = 0;
         joy_msg.speed_mode= 0;
-
-        // Inizializza l'array di valori dei bottoni e switch
-        buttons_switches_values = {0, 0, 0, 0, 0, 0}
 
         // Configura e avvia il server in un thread separato
         start_server();
@@ -77,7 +80,7 @@ private:
         });
 
         // Avvia il server in un thread separato per non bloccare ROS
-        server_thread_ = std::thread([this]() {
+        server_thread = std::thread([this]() {
             RCLCPP_INFO(this->get_logger(), "Server HTTP avviato su http://localhost:8000");
             RCLCPP_INFO(this->get_logger(), "Apri questo indirizzo nel browser per usare il controller.");
             server.listen("0.0.0.0", 8000);
@@ -95,8 +98,7 @@ private:
                 double x_joy = std::stof(req.get_param_value("x"));
                 double y_joy = std::stof(req.get_param_value("y"));
 
-                if (x_joy == 0) x_joy = 0.0001;
-                joy_msg.joystick_angles= std::atan2(y_joy/x_joy) * 180.0 / M_PI;
+                joy_msg.joystick_angles= std::atan2(y_joy, x_joy) * 180.0 / M_PI;
                 joy_msg.state = 2;
                 
             } else if (type == "button" || type == "switch") {
@@ -160,6 +162,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
