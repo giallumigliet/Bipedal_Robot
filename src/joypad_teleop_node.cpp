@@ -1,3 +1,4 @@
+#include "Bipedal_Robot/include/constants.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "Bipedal_Robot/msg/UserCommands.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
@@ -94,7 +95,7 @@ private:
                 double x_joy = std::stof(req.get_param_value("x"));
                 double y_joy = std::stof(req.get_param_value("y"));
 
-                joy_msg.joystick_angles= std::atan2(y_joy, x_joy) * 180.0 / 3.14159265358979323846;
+                joy_msg.joystick_angles= std::atan2(y_joy, x_joy) * 180.0 / PI;
                 joy_msg.state = 2;
                 
             } else if (type == "button" || type == "switch") {
@@ -157,6 +158,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
