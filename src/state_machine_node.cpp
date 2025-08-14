@@ -6,11 +6,24 @@
 #include "std_msgs/UInt8.hpp"
 #include "Bipedal_Robot/include/constants.hpp"
 
-class StateMachineNode : public rclcpp::Node
-{
+enum RobotState {
+  SITTED,
+  STANDING,
+  WALKING_ON_SPOT,
+  JOYSTICK,
+  ROTATION_L1,
+  ROTATION_R1,
+  LATERAL_L2,
+  LATERAL_R2,
+  RECOVERY,
+  DEAD, 
+  DISCONNECTED
+};
+
+
+class StateMachineNode : public rclcpp::Node{
 public:
-  StateMachineNode() : Node("state_machine_node")
-  {
+  StateMachineNode() : Node("state_machine_node") {
     // Initializing variables
     falling = false;
     dead = false;
@@ -18,6 +31,7 @@ public:
     
     // Initializing publisher
     state_publisher = this->create_publisher<std_msgs::UInt8>("robot_state", 10);
+    state_msg = 0;
 
     // Initializing subscriber
     user_cmds_sub = this->create_subscription<Bipedal_Robot::msg::UserCmds>(
@@ -29,15 +43,18 @@ public:
   }
 
 private:
-  void user_cmds_callback(const Bipedal_Robot::msg::UserCmds::SharedPtr cmds_msg)
-  {
-      // Logica per gestire i comandi utente
-      // Aggiorna lo stato interno del nodo
-      // ...
+  void user_cmds_callback(const Bipedal_Robot::msg::UserCmds::SharedPtr cmds_msg) {
+    // STATE CONDITION CHECK
+    if (online == false) state_msg = DISCONNECTED:
+    else if (dead == true) state_msg = DEAD;
+    else if (falling == true) state_msg = RECOVERY;
+    else state_msg = cmds_msg.state;
+    
+    // PUBLISH MESSAGE
+    state_publisher->publish(state_msg);
   }
 
-  void imu_data_callback(const Bipedal_Robot::msg::ImuData::SharedPtr imu_msg)
-  { 
+  void imu_data_callback(const Bipedal_Robot::msg::ImuData::SharedPtr imu_msg) { 
     // FALLING CHECK
     if ((std::abs(imu_msg.ax) > MAX_AX) || (std::abs(imu_msg.ay) > MAX_AY) || (std::abs(imu_msg.az) > MAX_AZ) || (std::abs(imu_msg.roll) > MAX_RECOVERY_ROLL) || (std::abs(imu_msg.pitch) > MAX_RECOVERY_PITCH)) {
       falling = true;
@@ -53,8 +70,7 @@ private:
     else dead = false;
   }
 
-  void is_online_callback(const std_msgs::msg::Bool::SharedPtr online_msg)
-  {
+  void is_online_callback(const std_msgs::msg::Bool::SharedPtr online_msg) {
     // ESP32 CONNECTION CHECK
     online = online_msg;
     if (online) RCLCPP_WARN(this->get_logger(), "ERROR! ESP32 not connected!!");
@@ -62,17 +78,18 @@ private:
 
   // Defining publisher and subscribers as class members
   rclcpp::Publisher<std_msgs::UInt8>::SharedPtr state_publisher;
+  std_msgs::UInt8 state_msg;
   rclcpp::Subscription<your_msgs::msg::UserCmds>::SharedPtr user_cmds_sub;
   rclcpp::Subscription<your_msgs::msg::ImuData>::SharedPtr imu_data_sub;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr is_online_sub;
   bool falling, dead, online;
 };
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char * argv[]) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<StateMachineNode>());
   rclcpp::shutdown();
   return 0;
 }
+
 
