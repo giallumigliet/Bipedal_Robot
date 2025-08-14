@@ -20,6 +20,19 @@
 #include <sstream>
 
 
+enum RobotState {
+  SITTED,
+  STANDING,
+  WALKING_ON_SPOT,
+  JOYSTICK,
+  ROTATION_L1,
+  ROTATION_R1,
+  LATERAL_L2,
+  LATERAL_R2,
+  RECOVERY,
+  DEAD, 
+  DISCONNECTED
+};
 
 
 // Definiamo la mappatura dai nomi dei pulsanti agli indici dell'array
@@ -96,8 +109,8 @@ private:
                 double y_joy = std::stof(req.get_param_value("y"));
 
                 joy_msg.joystick_angles= std::atan2(y_joy, x_joy) * 180.0 / PI;
-                joy_msg.state = 2;
-                
+                joy_msg.state = JOYSTICK;
+
             } else if (type == "button" || type == "switch") {
                 // UPDATE BUTTONS AND SWITCHES VALUES
                 std::string id = req.has_param("button") ? req.get_param_value("button") : req.get_param_value("id");
@@ -112,14 +125,14 @@ private:
                     else joy_msg.speed_mode= 0;
 
                     // ROBOT STATE SELECTION:
-                    // {sitted, 0}, {walking on the spot, 1}, {joystick, 2}, {L1 rotation, 3}, {R1 rotation, 4}, {L2 lateral, 5}, {R2 lateral, 6}
-                    if (buttons_switches_values[5] == 1) joy_msg.state = 0;  //if SITTED switch is on, state is SITTED for sure
+                    if (buttons_switches_values[5] == 0) joy_msg.state = SITTED;  //Three States Toggle Switch (0=SITTED, 1=STANDING, 2=WALKING_ON_SPOT)
+                    else if (buttons_switches_values[5] == 1) joy_msg.state = STANDING;  
                     else {
-                        if (buttons_switches_values[0] == 0 && buttons_switches_values[1] == 0 && buttons_switches_values[2] == 0 && buttons_switches_values[3] == 0) joy_msg.state = 1; 
-                        else if (buttons_switches_values[0] == 1) joy_msg.state = 3;
-                        else if (buttons_switches_values[1] == 1) joy_msg.state = 4;
-                        else if (buttons_switches_values[2] == 1) joy_msg.state = 5;
-                        else if (buttons_switches_values[3] == 1) joy_msg.state = 6;
+                        if (buttons_switches_values[0] == 0 && buttons_switches_values[1] == 0 && buttons_switches_values[2] == 0 && buttons_switches_values[3] == 0) joy_msg.state = WALKING_ON_SPOT; 
+                        else if (buttons_switches_values[0] == 1) joy_msg.state = ROTATION_L1;
+                        else if (buttons_switches_values[1] == 1) joy_msg.state = LATERAL_L2;
+                        else if (buttons_switches_values[2] == 1) joy_msg.state = ROTATION_R1;
+                        else if (buttons_switches_values[3] == 1) joy_msg.state = LATERAL_R2;
                     }
                 } else {
                     RCLCPP_WARN(this->get_logger(), "ID pulsante/switch non riconosciuto: %s", id.c_str());
@@ -158,6 +171,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
