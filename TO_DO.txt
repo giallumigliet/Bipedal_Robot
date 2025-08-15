@@ -1,3 +1,4 @@
 -CHECK if robot_parameters.yaml in config folder is needed or if you can just use constants.hpp in include folder
 -UPDATE joypad.html: change the sitted-standing switch into a Three States Toggle Switch (0=SITTED, 1=STANDING, 2=WALKING_ON_SPOT)
 -UPDATE README.md
+-UPDATE IMUData.msg if needed, so also the subscribed nodes
