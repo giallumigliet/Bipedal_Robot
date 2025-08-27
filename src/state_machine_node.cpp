@@ -1,10 +1,10 @@
 #include "rclcpp/rclcpp.hpp"
 
 // Sostituisci con i tuoi tipi di messaggi
-#include "Bipedal_Robot/msg/UserCommands.hpp"
-#include "Bipedal_Robot/msg/IMUData.hpp"
+#include "bipedal_robot/msg/usercommands.hpp"
+#include "bipedal_robot/msg/imudata.hpp"
 #include "std_msgs/UInt8.hpp"
-#include "Bipedal_Robot/include/constants.hpp"
+#include "bipedal_robot/include/constants.hpp"
 
 enum RobotState {
   SITTED,
@@ -91,6 +91,7 @@ int main(int argc, char * argv[]) {
   rclcpp::shutdown();
   return 0;
 }
+
 
 
 
