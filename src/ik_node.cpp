@@ -36,8 +36,6 @@ private:
     rclcpp::Subscription<Bipedal_Robot::msg::FeetPositions>::SharedPtr feet_sub_;
     rclcpp::Publisher<Bipedal_Robot::msg::JointAngles>::SharedPtr joint_pub_;
 
-    double A_, E_, F_;
-
     struct Angles {
         double gamma;
         double theta;
@@ -103,4 +101,5 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
