@@ -1,13 +1,13 @@
-#include "Bipedal_Robot/include/constants.hpp"
+#include "bipedal_robot/include/constants.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "Bipedal_Robot/msg/UserCommands.hpp"
+#include "bipedal_robot/msg/usercommands.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
 // Includi la libreria HTTP. Ignora i warning che potrebbe generare.
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-#include "Bipedal_Robot/include/httplib.h"
+#include "bipedal_robot/include/httplib.h"
 #pragma GCC diagnostic pop
 
 #include <thread>
@@ -171,6 +171,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
