@@ -56,7 +56,7 @@ private:
 
   void imu_data_callback(const Bipedal_Robot::msg::IMUData::SharedPtr imu_msg) { 
     // FALLING CHECK
-    if ((std::abs(imu_msg.ax) > MAX_AX) || (std::abs(imu_msg.ay) > MAX_AY) || (std::abs(imu_msg.az) > MAX_AZ) || (std::abs(imu_msg.roll) > MAX_RECOVERY_ROLL) || (std::abs(imu_msg.pitch) > MAX_RECOVERY_PITCH)) {
+    if ((std::abs(imu_msg.a_x) > MAX_AX) || (std::abs(imu_msg.a_y) > MAX_AY) || (std::abs(imu_msg.a_z) > MAX_AZ) || (std::abs(imu_msg.roll) > MAX_RECOVERY_ROLL) || (std::abs(imu_msg.pitch) > MAX_RECOVERY_PITCH)) {
       falling = true;
       RCLCPP_WARN(this->get_logger(), "WARNING! Robot is dead!!");
     }
@@ -91,6 +91,7 @@ int main(int argc, char * argv[]) {
   rclcpp::shutdown();
   return 0;
 }
+
 
 
 
