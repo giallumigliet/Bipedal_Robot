@@ -2,6 +2,12 @@
 #include <cmath>
 #include <algorithm>
 
+#include "rclcpp/rclcpp.hpp"
+
+// Sostituisci con i tuoi tipi di messaggi
+#include "bipedal_robot/msg/feetpositions.hpp"
+#include "bipedal_robot/msg/jointsangles.hpp"
+
 
 struct Angles {
     double gamma; // angolo rotazione piano YZ
@@ -74,5 +80,6 @@ int main() {
 
     return 0;
 }
+
 
 
