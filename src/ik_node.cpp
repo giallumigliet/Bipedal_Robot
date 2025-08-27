@@ -14,18 +14,18 @@ class IKNode : public rclcpp::Node {
 public:
     IKNode() : Node("ik_node") {
         // Publisher
-        joint_pub_ = this->create_publisher<Bipedal_Robot::msg::JointAngles>("joints_angles", 10);
+        joint_pub = this->create_publisher<Bipedal_Robot::msg::JointAngles>("joints_angles", 10);
 
         // Subscriber
-        feet_sub_ = this->create_subscription<Bipedal_Robot::msg::FeetPositions>(
+        feet_sub = this->create_subscription<Bipedal_Robot::msg::FeetPositions>(
             "feet_position", 10,
             std::bind(&IKNode::feetCallback, this, std::placeholders::_1)
         );
     }
 
 private:
-    rclcpp::Subscription<Bipedal_Robot::msg::FeetPositions>::SharedPtr feet_sub_;
-    rclcpp::Publisher<Bipedal_Robot::msg::JointAngles>::SharedPtr joint_pub_;
+    rclcpp::Subscription<Bipedal_Robot::msg::FeetPositions>::SharedPtr feet_sub;
+    rclcpp::Publisher<Bipedal_Robot::msg::JointAngles>::SharedPtr joint_pub;
 
     struct Angles {
         double gamma;
@@ -49,7 +49,7 @@ private:
         joint_msg.name = {"hip_joint_L", "knee_joint_L", "ankle_joint_L", "hip_joint_R", "knee_joint_R", "ankle_joint_R"};
         joint_msg.position = {ang_L.gamma, ang_L.theta, ang_L.phi, ang_R.gamma, ang_R.theta, ang_R.phi};
 
-        joint_pub_->publish(joint_msg);
+        joint_pub->publish(joint_msg);
     }
 
     inline double clamp(double x, double minVal=-1.0, double maxVal=1.0) {
@@ -58,18 +58,18 @@ private:
 
     Angles inverseKinematics(double X, double Y, double Z) {
         double C2 = Y*Y + Z*Z;
-        if (C2 < A_*A_) return {0,0,0,false};
+        if (C2 < A*A) return {0,0,0,false};
 
         double C = std::sqrt(C2);
-        double D = std::sqrt(C*C - A_*A_);
+        double D = std::sqrt(C*C - A*A);
         double delta = std::atan2(Y, Z);
-        double epsilon = std::atan2(D, A_);
+        double epsilon = std::atan2(D, A);
         double omega = delta + epsilon;
         double gamma = omega - M_PI/2.0;
 
         double Dz = D * std::cos(gamma);
-        double Ez = E_ * std::cos(gamma);
-        double Fz = F_ * std::cos(gamma);
+        double Ez = E * std::cos(gamma);
+        double Fz = F * std::cos(gamma);
 
         double G = std::sqrt(Dz*Dz + X*X);
         double cosPhi = clamp((G*G - Ez*Ez - Fz*Fz) / (-2.0*Ez*Fz));
@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
