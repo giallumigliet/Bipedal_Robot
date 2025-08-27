@@ -45,8 +45,8 @@ private:
 
     // =======================================
     void feetCallback(const Bipedal_Robot::msg::FeetPositions::SharedPtr msg) {
-        Angles ang_L = inverseKinematics(msg->left->x, msg->left->y, msg->left->z);
-        Angles ang_R = inverseKinematics(msg->right->x, msg->right->y, msg->right->z);
+        Angles ang_L = inverseKinematics(msg->left.x, msg->left.y, msg->left.z);
+        Angles ang_R = inverseKinematics(msg->right.x, msg->right.y, msg->right.z);
 
         if (!ang_L.valid || !ang_R.valid) {
             RCLCPP_WARN(this->get_logger(), "Posizione piede non raggiungibile");
@@ -101,5 +101,6 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
