@@ -3,3 +3,6 @@
 -UPDATE state diagram with the new states
 -UPDATE README.md
 -UPDATE IMUData.msg if needed, so also the subscribed nodes
+
+
+-ARDUINO IDE: int pulse = map(ang,0, 180, SERVOMIN_sg90,SERVOMAX_sg90); is needed a way to select SERVOMIN and SERVOMAX for sg_90 and mg996r
