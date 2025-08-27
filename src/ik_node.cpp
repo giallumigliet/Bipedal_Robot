@@ -10,15 +10,6 @@
 #define E 10.0
 #define F 10.0
 
-// Struttura per gli angoli
-struct Angles {
-    double gamma;
-    double theta;
-    double phi;
-    bool valid;
-};
-
-
 class IKNode : public rclcpp::Node {
 public:
     IKNode() : Node("ik_node") {
@@ -101,6 +92,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
