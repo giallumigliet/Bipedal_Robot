@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/point.hpp>
-#include <sensor_msgs/msg/joint_state.hpp>
+#include <bipedal_robot/msg/feetpositions.hpp>
+#include <bipedal_robot/msg/jointsangles.hpp>
 #include <cmath>
 #include <vector>
 #include <string>
@@ -23,19 +23,18 @@ class IKNode : public rclcpp::Node {
 public:
     IKNode() : Node("ik_node") {
         // Publisher
-        joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joints_angles", 10);
+        joint_pub_ = this->create_publisher<Bipedal_Robot::msg::JointAngles>("joints_angles", 10);
 
         // Subscriber
-        feet_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
+        feet_sub_ = this->create_subscription<Bipedal_Robot::msg::FeetPositions>(
             "feet_position", 10,
             std::bind(&IKNode::feetCallback, this, std::placeholders::_1)
         );
     }
 
 private:
-    // ==================== Variabili membro ====================
-    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
-    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr feet_sub_;
+    rclcpp::Subscription<Bipedal_Robot::msg::FeetPositions>::SharedPtr feet_sub_;
+    rclcpp::Publisher<Bipedal_Robot::msg::JointAngles>::SharedPtr joint_pub_;
 
     double A_, E_, F_;
 
@@ -46,19 +45,20 @@ private:
         bool valid;
     };
 
-    // ==================== Funzioni private ====================
-    void feetCallback(const geometry_msgs::msg::Point::SharedPtr msg) {
-        Angles ang = inverseKinematics(msg->x, msg->y, msg->z);
+    // =======================================
+    void feetCallback(const Bipedal_Robot::msg::FeetPositions::SharedPtr msg) {
+        Angles ang_L = inverseKinematics(msg->left->x, msg->left->y, msg->left->z);
+        Angles ang_R = inverseKinematics(msg->right->x, msg->right->y, msg->right->z);
 
-        if (!ang.valid) {
+        if (!ang_L.valid || !ang_R.valid) {
             RCLCPP_WARN(this->get_logger(), "Posizione piede non raggiungibile");
             return;
         }
 
-        sensor_msgs::msg::JointState joint_msg;
+        Bipedal_Robot::msg::JointAngles joint_msg;
         joint_msg.header.stamp = this->get_clock()->now();
-        joint_msg.name = {"hip_joint", "knee_joint", "ankle_joint"};
-        joint_msg.position = {ang.gamma, ang.theta, ang.phi};
+        joint_msg.name = {"hip_joint_L", "knee_joint_L", "ankle_joint_L", "hip_joint_R", "knee_joint_R", "ankle_joint_R"};
+        joint_msg.position = {ang_L.gamma, ang_L.theta, ang_L.phi, ang_R.gamma, ang_R.theta, ang_R.phi};
 
         joint_pub_->publish(joint_msg);
     }
@@ -103,3 +103,4 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
