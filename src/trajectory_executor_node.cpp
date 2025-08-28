@@ -14,7 +14,7 @@
 class TrajectoryExecutorNode : public rclcpp::Node
 {
 public:
-  TrajectoryExecutorNode(): Node("trajectory_executor_node"), left_index(0), right_index(0), progress(0.0), step_size(0.01), start(false), left_requested(false), right_requested(false), left_ready(false), right_ready(false) {
+  TrajectoryExecutorNode(): Node("trajectory_executor_node"), left_index(1000000), right_index(1000000), progress(0.0), step_size(0.01), start(false), left_requested(false), right_requested(false), left_ready(false), right_ready(false) {
     // Publisher
     feet_pub = this->create_publisher<bipedal_robot::msg::FeetPositions>("/feet_positions", 10);
 
@@ -23,6 +23,9 @@ public:
 
     // Timer → simula l’avanzamento della progress bar
     timer = this->create_wall_timer(100ms, std::bind(&TrajectoryExecutorNode::update, this));
+
+    requestTrajectory(0); // left foot
+    requestTrajectory(1); // right foot
   }
 
 private:
@@ -35,7 +38,7 @@ private:
     if (right_index > TRAJECTORY_SIZE) {
       right_index = 0;
       right_points = next_right_points;
-      left_ready = false;
+      right_ready = false;
     }
     
     progress = static_cast<double>(left_index) / TRAJECTORY_SIZE;
