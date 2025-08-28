@@ -1,3 +1,4 @@
+#include "bipedal_robot/include/constants.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <bipedal_robot/msg/feetpositions.hpp>
 #include <bipedal_robot/msg/jointsangles.hpp>
@@ -6,9 +7,6 @@
 #include <string>
 #include <algorithm>
 
-#define A 5.0
-#define E 10.0
-#define F 10.0
 
 class IKNode : public rclcpp::Node {
 public:
@@ -92,6 +90,7 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
+
 
 
 
