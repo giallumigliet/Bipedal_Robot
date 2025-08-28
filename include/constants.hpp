@@ -3,6 +3,9 @@
 
 
 //ROBOT PHYSICAL PARAMETERS
+#define A 5.0 //length of the hip
+#define E 10.0 //length of the femur
+#define F 10.0 //length of the tibia
 
 //ROBOT STATE PARAMETERS
 #define MAX_AX 1
