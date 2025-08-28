@@ -10,26 +10,32 @@
 #include "bipedal_robot/srv/foottrajectory.hpp" 
 #include "bipedal_robot/include/constants.hpp" 
 
+using namespace std::chrono_literals;
 
 class TrajectoryExecutorNode : public rclcpp::Node
 {
 public:
-  TrajectoryExecutorNode(): Node("trajectory_executor_node"), left_index(1000000), right_index(1000000), progress(0.0), step_size(0.01), start(false), left_requested(false), right_requested(false), left_ready(false), right_ready(false) {
+  TrajectoryExecutorNode(): Node("trajectory_executor_node") {
+    
     // Publisher
     feet_pub = this->create_publisher<bipedal_robot::msg::FeetPositions>("/feet_positions", 10);
-
     // Service client
     client = this->create_client<bipedal_robot::srv::FootTrajectory>("/trajectory_planner_node/foot_trajectory");
-
     // Timer → simula l’avanzamento della progress bar
     timer = this->create_wall_timer(100ms, std::bind(&TrajectoryExecutorNode::update, this));
 
-    requestTrajectory(0); // left foot
-    requestTrajectory(1); // right foot
+    // Initialization, first trajectories request
+    requestTrajectory(LEFT_FOOT); 
+    requestTrajectory(RIGHT_FOOT); 
   }
 
 private:
   void update() {
+    // update() not extecuted until both initial trajectories are loaded
+    if (initialization) {
+      return;
+    }
+    
     if (left_index > TRAJECTORY_SIZE) {
       left_index = 0;
       left_points = next_left_points;
@@ -41,11 +47,11 @@ private:
       right_ready = false;
     }
     
-    progress = static_cast<double>(left_index) / TRAJECTORY_SIZE;
+    double progress = static_cast<double>(left_index_) / (TRAJECTORY_SIZE - 1);
 
     // before the trajectory ends, ask for a new one
-    bool right_needed = (progress > 0.3 && progress < 0.5); //right trajectory ends at 0.5 progress
-    bool left_needed = (progress > 0.8 && progress < 1.0); //left trajectory ends at 1.0 progress
+    bool right_needed = (progress > RIGHT_FOOT_REQUEST_PROGRESS); //right trajectory ends at 0.5 progress
+    bool left_needed = (progress > LEFT_FOOT_REQUEST_PROGRESS); //left trajectory ends at 1.0 progress
 
     if (left_needed && !left_requested) {
       uint8_t foot_id = 0; // 0 = left, 1 = right
@@ -59,17 +65,11 @@ private:
       right_requested = true;
     }
 
+    
     // here choose current point of the trajectory
     bipedal_robot::msg::FeetPositions feet_point_msg;
-    
-    feet_point_msg.left.x = left_points[left_index].x;
-    feet_point_msg.left.y = left_points[left_index].y;
-    feet_point_msg.left.z = left_points[left_index].z;
-    
-    feet_point_msg.right.x = right_points[right_index].x;
-    feet_point_msg.right.y = right_points[right_index].y;
-    feet_point_msg.right.z = right_points[right_index].z;
-    
+    feet_point_msg.left = left_points[left_index];
+    feet_point_msg.right = right_points[right_index];
     feet_pub->publish(feet_point_msg);
     
     left_index++;
@@ -100,6 +100,14 @@ private:
           right_ready = true;
           right_requested = false;
         }
+
+        if (initialization && left_ready && right_ready) {
+          left_points = next_left_points;
+          right_points = next_right_points;
+          left_ready = false;
+          right_ready = false;
+          initialization = false;
+        }
       });
   }
 
@@ -114,10 +122,15 @@ private:
   std::vector<geometry_msgs::msg::Point> next_right_points;
 
 
-  double progress;
-  int left_index, right_index;  
-  bool left_ready, right_ready;
-  bool left_requested, right_requested;
+  double progress = 0.0;
+  int left_index = 0;
+  int right_index = 0;  
+  bool left_ready = false;
+  bool right_ready = false;
+  bool left_requested = false;
+  bool right_requested = false;
+  bool initialization = true;
+  bool start = false;
     
 };
 
