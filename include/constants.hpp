@@ -1,6 +1,6 @@
 #define PI 3.14159265358979323846
 
-
+#define TRAJECTORY_SIZE 100
 
 //ROBOT PHYSICAL PARAMETERS
 #define A 5.0 //length of the hip
